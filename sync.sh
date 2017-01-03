@@ -1,38 +1,41 @@
 #!/usr/bin/env bash
 cd `dirname $0` && DIR=$(pwd) && cd -
 . ${DIR}/config.sh
-WORKDIR="$DIR/application-git"
+APP_WORKDIR="$DIR/git-application"
+SOURCE_WORKDIR="$DIR/git-source"
 
+echo "Git uri ${APP_GIT_URI}"
 
-if [[ ! -d ${DIR}/.git ]]; then
-    git --git-dir=${DIR}/.git init
-    git --git-dir=${DIR}/.git add .
-    git --git-dir=${DIR}/.git commit -m "initial"
+if [[ ! -d ${APP_WORKDIR}/.git ]]; then
+  mkdir -p ${APP_WORKDIR}/.git
+  git --work-tree=${APP_WORKDIR} --git-dir=${APP_WORKDIR}/.git init
+  git --work-tree=${APP_WORKDIR} --git-dir=${APP_WORKDIR}/.git remote add origin "${APP_GIT_URI}"
 fi
 
-if [[ ! -d ${WORKDIR} ]] || [[ ! -d ${WORKDIR}/.git ]]; then
-    mkdir -p ${WORKDIR}/.git
-    git --git-dir=${WORKDIR}/.git init
-    git --git-dir=${WORKDIR}/.git remote add origin "${APP_GIT_URI}"
+if [[ ! -d ${SOURCE_WORKDIR}/.git ]]; then
+  mkdir -p ${SOURCE_WORKDIR}/.git
+  git --work-tree=${SOURCE_WORKDIR} --git-dir=${SOURCE_WORKDIR}/.git init
+  git --work-tree=${SOURCE_WORKDIR} --git-dir=${SOURCE_WORKDIR}/.git remote add origin "${SOURCE_GIT_URI}"
 fi
 
-git --git-dir=${WORKDIR}/.git pull origin master
-
+git --work-tree=${APP_WORKDIR} --git-dir=${APP_WORKDIR}/.git fetch --all
+git --work-tree=${APP_WORKDIR} --git-dir=${APP_WORKDIR}/.git pull origin master
+git --work-tree=${SOURCE_WORKDIR} --git-dir=${SOURCE_WORKDIR}/.git fetch --all
+git --work-tree=${SOURCE_WORKDIR} --git-dir=${SOURCE_WORKDIR}/.git pull origin master
 
 while read tag;
 do
-    echo "PROCESS TAG: $tag"
-    if [[ ! -z ${START_FROM_TAG} ]] && [[ `php -r "echo version_compare('${tag}', '${START_FROM_TAG}');"` -lt 0 ]]; then
-        echo "Skipping..."
-    else
-        sed -i -e 's/GIT_URI=.*/GIT_REF=tags\/'${APP_GIT_URI}'/' Dockerfile
-        sed -i -e 's/GIT_REF=.*/GIT_REF=tags\/'${tag}'/' Dockerfile
-        git --git-dir=${DIR}/.git add -f Dockerfile
-        git --git-dir=${DIR}/.git commit -m "bump $tag"
-        git --git-dir=${DIR}/.git tag -a "$tag" -m "bump $tag"
-    fi
-done < <(diff -a <(git --git-dir=${DIR}/.git show-ref --tags | awk '{print $2}') <(git --git-dir=${WORKDIR}/.git ls-remote --tags | grep -v '\^{}' | awk '{print $2}') | grep '>' | awk -F '/' '{print $3}')
+  echo "PROCESS TAG: $tag"
+  if [[ ! -z ${START_FROM_TAG} ]] && [[ `php -r "echo version_compare('${tag}', '${START_FROM_TAG}');"` -lt 0 ]]; then
+    echo "Skipping..."
+  else
+    sed -i -e 's/GIT_URI=.*/GIT_URI='$(echo ${APP_GIT_URI} | sed -e 's/[\.\:\/&]/\\&/g')'/' ${APP_WORKDIR}/Dockerfile
+    sed -i -e 's/GIT_REF=.*/GIT_REF=tags\/'$(echo ${tag} | sed -e 's/[\.\:\/&]/\\\\&/g')'/' ${APP_WORKDIR}/Dockerfile
+    git --work-tree=${APP_WORKDIR} --git-dir=${APP_WORKDIR}/.git add -f ${APP_WORKDIR}/Dockerfile
+    git --work-tree=${APP_WORKDIR} --git-dir=${APP_WORKDIR}/.git commit -m "bump $tag"
+    git --work-tree=${APP_WORKDIR} --git-dir=${APP_WORKDIR}/.git tag -a "$tag" -m "bump $tag"
+  fi
+done < <(diff -a <(git --work-tree=${APP_WORKDIR} --git-dir=${APP_WORKDIR}/.git show-ref --tags | awk '{print $2}') <(git --work-tree=${SOURCE_WORKDIR} --git-dir=${SOURCE_WORKDIR}/.git ls-remote --tags | grep -v '\^{}' | awk '{print $2}') | grep '>' | awk -F '/' '{print $3}')
 
-# For auto push uncomment line below
-git --git-dir=${DIR}/.git push --all origin
-git --git-dir=${DIR}/.git push --tags origin
+git --work-tree=${APP_WORKDIR} --git-dir=${APP_WORKDIR}/.git push --all origin
+git --work-tree=${APP_WORKDIR} --git-dir=${APP_WORKDIR}/.git push --tags origin
