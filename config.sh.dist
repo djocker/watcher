@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
-APP_GIT_URI="https://github.com/djocker/orocrm.git"
+APP_GIT_URI="git@github.com:djocker/orocrm.git"
 SOURCE_GIT_URI="https://github.com/orocrm/crm-application.git"
-START_FROM_TAG=
+START_FROM_TAG=1.9.0
