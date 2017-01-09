@@ -27,7 +27,7 @@ while read tag;
 do
   echo "PROCESS TAG: $tag"
   if [[ ! -z ${START_FROM_TAG} ]] && [[ `php -r "echo version_compare('${tag}', '${START_FROM_TAG}');"` -lt 0 ]]; then
-    echo "Skipping..."
+    echo "Skipping... (${tag} < ${START_FROM_TAG})"
   else
     sed -i -e 's/GIT_URI=.*/GIT_URI="'$(echo ${APP_GIT_URI} | sed -e 's/[\.\:\/&]/\\&/g')'"/' ${APP_WORKDIR}/Dockerfile
     sed -i -e 's/GIT_REF=.*/GIT_REF="tags\/'$(echo ${tag} | sed -e 's/[\.\:\/&]/\\&/g')'"/' ${APP_WORKDIR}/Dockerfile
