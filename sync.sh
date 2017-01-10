@@ -19,8 +19,10 @@ if [[ ! -d ${SOURCE_WORKDIR}/.git ]]; then
 fi
 
 git --work-tree=${APP_WORKDIR} --git-dir=${APP_WORKDIR}/.git fetch --all
+git --work-tree=${APP_WORKDIR} --git-dir=${APP_WORKDIR}/.git fetch --tags
 git --work-tree=${APP_WORKDIR} --git-dir=${APP_WORKDIR}/.git pull origin master
 git --work-tree=${SOURCE_WORKDIR} --git-dir=${SOURCE_WORKDIR}/.git fetch --all
+git --work-tree=${SOURCE_WORKDIR} --git-dir=${SOURCE_WORKDIR}/.git fetch --tags
 git --work-tree=${SOURCE_WORKDIR} --git-dir=${SOURCE_WORKDIR}/.git pull origin master
 
 while read tag;
