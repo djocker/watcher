@@ -31,7 +31,7 @@ do
   if [[ ! -z ${START_FROM_TAG} ]] && [[ `php -r "echo version_compare('${tag}', '${START_FROM_TAG}');"` -lt 0 ]]; then
     echo "Skipping... (${tag} < ${START_FROM_TAG})"
   else
-    sed -i -e 's/GIT_URI=.*/GIT_URI="'$(echo ${APP_GIT_URI} | sed -e 's/[\.\:\/&]/\\&/g')'"/' ${APP_WORKDIR}/Dockerfile
+    sed -i -e 's/GIT_URI=.*/GIT_URI="'$(echo ${SOURCE_WORKDIR} | sed -e 's/[\.\:\/&]/\\&/g')'"/' ${APP_WORKDIR}/Dockerfile
     sed -i -e 's/GIT_REF=.*/GIT_REF="tags\/'$(echo ${tag} | sed -e 's/[\.\:\/&]/\\&/g')'"/' ${APP_WORKDIR}/Dockerfile
     git --work-tree=${APP_WORKDIR} --git-dir=${APP_WORKDIR}/.git add -f ${APP_WORKDIR}/Dockerfile
     git --work-tree=${APP_WORKDIR} --git-dir=${APP_WORKDIR}/.git commit -m "bump $tag"
